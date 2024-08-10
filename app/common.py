@@ -7,7 +7,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 from config import EmailModel, LoginSettings
-from schema import RecipientModel
+from schemas import RecipientModel
 
 login_settings = LoginSettings()
 
