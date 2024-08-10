@@ -1,16 +1,22 @@
 import logging
 import os
 import smtplib
+import time
 from concurrent.futures import ThreadPoolExecutor
 from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
-from config import EmailModel, LoginSettings
+import google.generativeai as genai
+from config import EmailModel, GeminiApi, LoginSettings
 from schemas import RecipientModel
 
 login_settings = LoginSettings()
+gemini_api = GeminiApi()
+
+gemini = genai.configure(api_key=gemini_api.key.get_secret_value())
+model = genai.GenerativeModel("gemini-1.5-flash")
 
 # Create logs directory if it doesn't exist
 log_dir = "logs"
@@ -53,11 +59,21 @@ def send_single_email(
     emails = recipient.emails
     formatted_name = recipient.name
     formatted_name = " ".join([name.capitalize() for name in formatted_name.lower().split(" ")])
+    generated_body = model.generate_content(
+        gemini_api.prompt.format(
+            resume_text=gemini_api.resume_text,
+            company_name=formatted_name,
+            email_template=gemini_api.email_template,
+        )
+    ).text
+
+    body = body.format(name=formatted_name, sender_name=sender["name"], body=generated_body)
+
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
         smtp_server.login(login_settings.email, login_settings.password.get_secret_value())
         for email in emails:
             msg = get_message_object(subject, sender, attachment_path)
-            msg.attach(MIMEText(body.format(name=formatted_name, sender_name=sender["name"]), "plain"))
+            msg.attach(MIMEText(body, "plain"))
             msg["to"] = email
             try:
                 smtp_server.sendmail(sender["email"], email, msg.as_string())
@@ -78,13 +94,24 @@ def send_email(
     attachment_path: str = None,
 ):
     logger.info(f"Starting email sending process for {len(recipients)} recipients")
-    with ThreadPoolExecutor() as executor:
-        futures = [
-            executor.submit(send_single_email, subject, body, sender, recipient, attachment_path)
-            for recipient in recipients
-        ]
-        for future in futures:
-            future.result()
+
+    batch_size = 10
+    for i in range(0, len(recipients), batch_size):
+        batch = recipients[i : i + batch_size]
+
+        with ThreadPoolExecutor() as executor:
+            futures = [
+                executor.submit(send_single_email, subject, body, sender, recipient, attachment_path)
+                for recipient in batch
+            ]
+            for future in futures:
+                future.result()
+
+        logger.info(f"Sent emails to recipients {i+1} to {min(i+batch_size, len(recipients))}")
+
+        if i + batch_size < len(recipients):
+            logger.info("Waiting 1 minute before sending next batch")
+            time.sleep(60)  # Wait for 60 seconds (1 minute)
 
     logger.info("All Emails Sent!")
     print("All Emails Sent!")
