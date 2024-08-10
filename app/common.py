@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 import smtplib
 import time
 from concurrent.futures import ThreadPoolExecutor
@@ -61,6 +62,14 @@ def parse_search_query_response(response):
     return list_of_results
 
 
+def parse_generated_content(content):
+    # find any brackets that contain any thing
+    matches = re.findall(r"\[.*?\]", content)
+    if matches:
+        return gemini_api.default_body
+    return content
+
+
 # ============== Send Single Email ==============
 def send_single_email(
     subject: str,
@@ -88,6 +97,7 @@ def send_single_email(
         )
     ).text
 
+    generated_body = parse_generated_content(generated_body)
     body = body.format(name=formatted_name, sender_name=sender["name"], body=generated_body)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
