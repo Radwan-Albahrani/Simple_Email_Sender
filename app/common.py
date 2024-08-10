@@ -114,7 +114,7 @@ def send_single_email(
             msg["to"] = email
             try:
                 smtp_server.sendmail(sender["email"], email, msg.as_string())
-                logger.info(f"Email sent successfully to {email}")
+                logger.info(f"Email sent successfully to {email} - LLM: {use_llm}")
                 print(f"Email sent to {email}")
             except Exception as e:
                 error_message = f"Failed to send email to {email}: {str(e)}"
@@ -131,7 +131,7 @@ def send_email(
     attachment_path: str = None,
     use_llm: bool = False,
 ):
-    logger.info(f"Starting email sending process for {len(recipients)} recipients")
+    logger.info(f"Starting email sending process for {len(recipients)} recipients. LLM: {use_llm}")
     if use_llm:
         global model
         genai.configure(api_key=gemini_api.key.get_secret_value())
@@ -149,7 +149,7 @@ def send_email(
             for future in futures:
                 future.result()
 
-        logger.info(f"Sent emails to recipients {i+1} to {min(i+batch_size, len(recipients))}")
+        logger.info(f"Sent emails to recipients {i+1} to {min(i+batch_size, len(recipients))} - LLM: {use_llm}")
 
         if i + batch_size < len(recipients) and use_llm:
             logger.info("Waiting 1 minute before sending next batch")
