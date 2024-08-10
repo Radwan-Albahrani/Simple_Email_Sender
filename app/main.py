@@ -16,17 +16,12 @@ def main():
 
     # ============== Recipients ==============
     recipients: list[RecipientModel] = RecipientModel.from_file(email_paths.test_path)
-    use_llm = False
-    ans = input("Use llm? y/n: ")
-    if ans == "y":
-        use_llm = True
     email_sender(
         subject=subject,
         sender=sender,
         recipients=recipients,
-        email=email,
+        attachment_path=email.attachment_path,
         template=template,
-        use_llm=use_llm,
     )
 
 

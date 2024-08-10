@@ -82,7 +82,7 @@ def send_single_email(
     attachment_path: str,
     use_llm: bool = False,
 ):
-    email = EmailModel()
+    email_model = EmailModel()
     emails = recipient.emails
     formatted_name = recipient.name
     formatted_name = " ".join([name.capitalize() for name in formatted_name.lower().split(" ")])
@@ -100,11 +100,11 @@ def send_single_email(
             )
         ).text
 
-        generated_body = parse_generated_content(generated_body, email)
+        generated_body = parse_generated_content(generated_body, email_model)
     if use_llm:
         body = body.format(name=formatted_name, sender_name=sender["name"], body=generated_body)
     else:
-        body = body.format(name=formatted_name, sender_name=sender["name"], body=email.default_body)
+        body = body.format(name=formatted_name, sender_name=sender["name"], body=email_model.default_body)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
         smtp_server.login(login_settings.email, login_settings.password.get_secret_value())
@@ -134,7 +134,7 @@ def send_email(
     logger.info(f"Starting email sending process for {len(recipients)} recipients")
     if use_llm:
         global model
-        gemini = genai.configure(api_key=gemini_api.key.get_secret_value())
+        genai.configure(api_key=gemini_api.key.get_secret_value())
         model = genai.GenerativeModel("gemini-1.5-flash")
 
     batch_size = 10
@@ -151,7 +151,7 @@ def send_email(
 
         logger.info(f"Sent emails to recipients {i+1} to {min(i+batch_size, len(recipients))}")
 
-        if i + batch_size < len(recipients):
+        if i + batch_size < len(recipients) and use_llm:
             logger.info("Waiting 1 minute before sending next batch")
             time.sleep(60)  # Wait for 60 seconds (1 minute)
 

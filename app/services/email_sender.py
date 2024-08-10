@@ -8,11 +8,14 @@ def email_sender(
     subject: str,
     sender: EmailModel.SenderModel,
     recipients: list[RecipientModel],
-    email: EmailModel,
+    attachment_path: str,
     template: str,
-    use_llm: bool = False,
 ):
     print(f"Sending Emails.. Total count: {len(recipients)}")
+    use_llm = False
+    ans = input("Use llm? y/n: ")
+    if ans == "y":
+        use_llm = True
     sure = input("Are you sure you want to send these emails? (YES/n): ")
     if sure == "YES":
         send_email(
@@ -20,6 +23,6 @@ def email_sender(
             body=template,
             sender=sender,
             recipients=recipients,
-            attachment_path=email.attachment_path,
+            attachment_path=attachment_path,
             use_llm=use_llm,
         )
