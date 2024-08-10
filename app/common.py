@@ -17,9 +17,6 @@ from schemas import RecipientModel
 login_settings = LoginSettings()
 gemini_api = GeminiApi()
 
-gemini = genai.configure(api_key=gemini_api.key.get_secret_value())
-model = genai.GenerativeModel("gemini-1.5-flash")
-
 # Create logs directory if it doesn't exist
 log_dir = "logs"
 if not os.path.exists(log_dir):
@@ -50,7 +47,10 @@ def get_message_object(subject, sender, attachment_path=None):
     return msg
 
 
-def parse_search_query_response(response):
+def parse_search_query_response(search_query=""):
+    url = gemini_api.search_url
+    url = url.format(query=search_query)
+    response = requests.get(url)
     response_json = response.json()
     search_results = response_json.get("results", [])
     list_of_results = []
@@ -62,11 +62,14 @@ def parse_search_query_response(response):
     return list_of_results
 
 
-def parse_generated_content(content):
+def parse_generated_content(
+    content: str,
+    email: EmailModel,
+):
     # find any brackets that contain any thing
     matches = re.findall(r"\[.*?\]", content)
     if matches:
-        return gemini_api.default_body
+        return email.default_body
     return content
 
 
@@ -77,28 +80,31 @@ def send_single_email(
     sender: EmailModel.SenderModel,
     recipient: RecipientModel,
     attachment_path: str,
+    use_llm: bool = False,
 ):
+    email = EmailModel()
     emails = recipient.emails
     formatted_name = recipient.name
     formatted_name = " ".join([name.capitalize() for name in formatted_name.lower().split(" ")])
+    if use_llm:
+        global model
+        search_query = f"{formatted_name} Company Projects Saudi Arabia"
+        list_of_results = parse_search_query_response(search_query=search_query)
 
-    search_query = f"{formatted_name} Company Projects Saudi Arabia"
-    url = gemini_api.search_url
-    url = url.format(query=search_query)
-    response = requests.get(url)
-    list_of_results = parse_search_query_response(response)
+        generated_body = model.generate_content(
+            gemini_api.prompt.format(
+                resume_text=gemini_api.resume_text,
+                company_name=formatted_name,
+                email_template=gemini_api.email_template,
+                extra_info=list_of_results,
+            )
+        ).text
 
-    generated_body = model.generate_content(
-        gemini_api.prompt.format(
-            resume_text=gemini_api.resume_text,
-            company_name=formatted_name,
-            email_template=gemini_api.email_template,
-            extra_info=list_of_results,
-        )
-    ).text
-
-    generated_body = parse_generated_content(generated_body)
-    body = body.format(name=formatted_name, sender_name=sender["name"], body=generated_body)
+        generated_body = parse_generated_content(generated_body, email)
+    if use_llm:
+        body = body.format(name=formatted_name, sender_name=sender["name"], body=generated_body)
+    else:
+        body = body.format(name=formatted_name, sender_name=sender["name"], body=email.default_body)
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
         smtp_server.login(login_settings.email, login_settings.password.get_secret_value())
@@ -123,8 +129,13 @@ def send_email(
     sender: EmailModel.SenderModel,
     recipients: list[RecipientModel],
     attachment_path: str = None,
+    use_llm: bool = False,
 ):
     logger.info(f"Starting email sending process for {len(recipients)} recipients")
+    if use_llm:
+        global model
+        gemini = genai.configure(api_key=gemini_api.key.get_secret_value())
+        model = genai.GenerativeModel("gemini-1.5-flash")
 
     batch_size = 10
     for i in range(0, len(recipients), batch_size):
@@ -132,7 +143,7 @@ def send_email(
 
         with ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(send_single_email, subject, body, sender, recipient, attachment_path)
+                executor.submit(send_single_email, subject, body, sender, recipient, attachment_path, use_llm)
                 for recipient in batch
             ]
             for future in futures:

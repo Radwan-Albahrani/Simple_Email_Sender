@@ -10,6 +10,7 @@ def email_sender(
     recipients: list[RecipientModel],
     email: EmailModel,
     template: str,
+    use_llm: bool = False,
 ):
     print(f"Sending Emails.. Total count: {len(recipients)}")
     sure = input("Are you sure you want to send these emails? (YES/n): ")
@@ -20,4 +21,5 @@ def email_sender(
             sender=sender,
             recipients=recipients,
             attachment_path=email.attachment_path,
+            use_llm=use_llm,
         )

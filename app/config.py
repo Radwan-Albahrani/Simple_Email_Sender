@@ -49,11 +49,6 @@ Context (use if provided):
 Create an email body that sounds like it's genuinely written by me, based on my actual experiences and interests from the resume. Keep it professional but conversational,
 and avoid sounding overly formal or artificial.
 """
-    default_body: str = """
-I am writing to apply for a part-time developer position at your organization.
-
-As a full stack engineer with experience in FastAPI, Django, Flutter, and React, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
-"""
     resume_text: str
     email_template: str
     search_url: str
@@ -100,6 +95,12 @@ class EmailModel(BaseSettings):
     email_sender: SenderModel
     attachment_path: str
     template: str
+    default_body: str = """My name is Radwan Albahrani, currently Studying at Imam Abdulrahman Bin Faisal University, Majoring in Artificial Intelligence.
+
+I am writing to apply for an internship or part-time developer position at your organization.
+
+As a full stack engineer with experience in FastAPI, Django, Flutter, and React, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
+"""
 
     @model_validator(mode="before")
     def validate_model(cls, v):
