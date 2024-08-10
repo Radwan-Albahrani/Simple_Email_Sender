@@ -1,3 +1,4 @@
+import logging
 import os
 import smtplib
 from concurrent.futures import ThreadPoolExecutor
@@ -10,6 +11,19 @@ from config import EmailModel, LoginSettings
 from schemas import RecipientModel
 
 login_settings = LoginSettings()
+
+# Create logs directory if it doesn't exist
+log_dir = "logs"
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+# Set up logging
+logging.basicConfig(
+    filename=os.path.join(log_dir, "email_logs.log"),
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+)
+logger = logging.getLogger(__name__)
 
 
 # ============== Prepare message ==============
@@ -47,9 +61,12 @@ def send_single_email(
             msg["to"] = email
             try:
                 smtp_server.sendmail(sender["email"], email, msg.as_string())
+                logger.info(f"Email sent successfully to {email}")
                 print(f"Email sent to {email}")
             except Exception as e:
-                print(f"Failed to send email to {email}: {e}")
+                error_message = f"Failed to send email to {email}: {str(e)}"
+                logger.error(error_message)
+                print(error_message)
 
 
 # ============== Send Emails using Multithreading ==============
@@ -60,6 +77,7 @@ def send_email(
     recipients: list[RecipientModel],
     attachment_path: str = None,
 ):
+    logger.info(f"Starting email sending process for {len(recipients)} recipients")
     with ThreadPoolExecutor() as executor:
         futures = [
             executor.submit(send_single_email, subject, body, sender, recipient, attachment_path)
@@ -68,4 +86,5 @@ def send_email(
         for future in futures:
             future.result()
 
+    logger.info("All Emails Sent!")
     print("All Emails Sent!")

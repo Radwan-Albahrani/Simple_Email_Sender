@@ -18,11 +18,11 @@ def main():
     recipients: list[RecipientModel] = RecipientModel.from_file(email_paths.test_path)
 
     email_sender(
-        subject,
-        sender,
-        recipients,
-        email,
-        template,
+        subject=subject,
+        sender=sender,
+        recipients=recipients,
+        email=email,
+        template=template,
     )
 
 
