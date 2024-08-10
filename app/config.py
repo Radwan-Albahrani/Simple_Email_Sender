@@ -17,29 +17,38 @@ class LoginSettings(BaseSettings):
 class GeminiApi(BaseSettings):
     key: SecretStr
     prompt: str = """
-Generate a brief and professional email body that can be used for job applications across various companies. The response should showcase my skills, experience, and background in a general manner that could apply to multiple potential employers. Include mentions of common industry trends, versatile professional skills, and how I can contribute value to any team. Use general industry keywords and technologies that are widely applicable.
+Generate a brief and professional email body that can be used for job applications across various companies. The response should showcase my skills,
+experience, and background in a general manner that could apply to multiple potential employers. Include mentions of common industry trends,
+versatile professional skills, and how I can contribute value to any team. Use general industry keywords and technologies that are widely applicable.
+If given Additional Info, Please use it as it is related to that specific Company. Use it to add specific details about the company's projects or industry trends.
 
 Rules:
 - ONLY GENERATE THE BODY SECTION OF THE EMAIL.
-- DO NOT ADD ANY PLACEHOLDERS OR ADDITIONAL TEXT. THE RESPONSE SHOULD BE A COMPLETE EMAIL BODY.
+- DO NOT ADD ANY PLACEHOLDERS OR ADDITIONAL TEXT. THE RESPONSE SHOULD BE A COMPLETE EMAIL BODY. IF YOU ADD ANY PLACEHOLDERS OR ADDITIONAL TEXT, YOUR RESPONSE WILL BE REJECTED.
+- USE THE ADDITIONAL INFO ONLY IF PROVIDED. IF NO ADDITIONAL INFO IS PROVIDED, IGNORE IT.
+- WHEN USING ADDITIONAL INFO, ASSUME IT IS RELATED TO THE COMPANY MENTIONED IN THE EMAIL. IT IS A GOOGLE SEARCH RESULT FOR THE COMPANY'S PROJECTS.
 - DO NOT ASK ME TO PROVIDE ANY ADDITIONAL INFORMATION.
 - DO NOT ASK ME TO MENTION ANY SPECIFIC COMPANY NAME OR PROJECT.
-- KEEP IT AT MOST 2 PARAGRAPHS LONG. EACH PARAGRAPH SHOULD BE NO MORE THAN 3 LINES.
-
+- SEPARATE THE RESPONSE INTO 2 PARAGRAPHS EACH CONSISTING OF 1 TO 2 SENTENCES. USE A BLANK LINE TO SEPARATE THE PARAGRAPHS.
+- BE VERY CONCISE AND TO THE POINT IN EACH PARAGRAPH. AVOID REDUNDANT INFORMATION. DO NOT EXCEED 2 SENTENCES PER PARAGRAPH.
 
 Here is the additional context for the email:
 - Company Name: {company_name}
+- Additional Info: {extra_info}
 - My Resume: {resume_text}
 - Email Template: {email_template}
+
 When responding, use the provided resume information to create a general, adaptable email body that could be sent to various companies.
 """
     resume_text: str
     email_template: str
+    search_url: str
 
     @model_validator(mode="before")
     def validate_model(cls, v):
         return {
             "key": v["key"],
+            "search_url": v["search_url"],
             "resume_text": open(v["resume_text"]).read(),
             "email_template": open(v["email_template"]).read(),
         }

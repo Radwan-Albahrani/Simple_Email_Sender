@@ -9,6 +9,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 
 import google.generativeai as genai
+import requests
 from config import EmailModel, GeminiApi, LoginSettings
 from schemas import RecipientModel
 
@@ -48,6 +49,18 @@ def get_message_object(subject, sender, attachment_path=None):
     return msg
 
 
+def parse_search_query_response(response):
+    response_json = response.json()
+    search_results = response_json.get("results", [])
+    list_of_results = []
+    if search_results:
+        for result in search_results[:5]:
+            title = result.get("title", "")
+            content = result.get("content", "")
+            list_of_results.append({"title": title, "content": content})
+    return list_of_results
+
+
 # ============== Send Single Email ==============
 def send_single_email(
     subject: str,
@@ -59,11 +72,19 @@ def send_single_email(
     emails = recipient.emails
     formatted_name = recipient.name
     formatted_name = " ".join([name.capitalize() for name in formatted_name.lower().split(" ")])
+
+    search_query = f"{formatted_name} Company Projects Saudi Arabia"
+    url = gemini_api.search_url
+    url = url.format(query=search_query)
+    response = requests.get(url)
+    list_of_results = parse_search_query_response(response)
+
     generated_body = model.generate_content(
         gemini_api.prompt.format(
             resume_text=gemini_api.resume_text,
             company_name=formatted_name,
             email_template=gemini_api.email_template,
+            extra_info=list_of_results,
         )
     ).text
 
