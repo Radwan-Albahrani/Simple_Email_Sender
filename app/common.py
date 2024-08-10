@@ -154,9 +154,9 @@ def send_email(
 
         logger.info(f"Sent emails to recipients {i+1} to {min(i+batch_size, len(recipients))} - LLM: {use_llm}")
 
-        if i + batch_size < len(recipients) and use_llm:
-            logger.info("Waiting 1 minute before sending next batch")
-            time.sleep(60)  # Wait for 60 seconds (1 minute)
+        if i + batch_size < len(recipients):
+            logger.info(f"Waiting {"one minute" if use_llm else "10 seconds"} before sending next batch")
+            time.sleep(60 if use_llm else 10)
 
     logger.info("All Emails Sent!")
     print("All Emails Sent!")
