@@ -97,9 +97,9 @@ class EmailModel(BaseSettings):
     template: str
     default_body: str = """My name is Radwan Albahrani, currently Studying at Imam Abdulrahman Bin Faisal University, Majoring in Artificial Intelligence.
 
-I am writing to apply for an internship or part-time developer position at your organization.
+I am writing to apply for a developer position at your organization.
 
-As a full stack engineer with experience in FastAPI, Django, Flutter, and React, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
+As a full stack engineer with experience in App and Web development, as well as proficiency in backend implementation, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
 """
 
     @model_validator(mode="before")
