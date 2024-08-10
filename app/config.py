@@ -95,9 +95,7 @@ class EmailModel(BaseSettings):
     email_sender: SenderModel
     attachment_path: str
     template: str
-    default_body: str = """My name is Radwan Albahrani, currently Studying at Imam Abdulrahman Bin Faisal University, Majoring in Artificial Intelligence.
-
-I am writing to apply for a developer position at your organization.
+    default_body: str = """My name is Radwan Albahrani, and I am writing to apply for a developer position at your organization.
 
 As a full stack engineer with experience in App and Web development, as well as proficiency in backend implementation, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
 """
