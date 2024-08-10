@@ -15,7 +15,6 @@ from config import EmailModel, GeminiApi, LoginSettings
 from schemas import RecipientModel
 
 login_settings = LoginSettings()
-gemini_api = GeminiApi()
 
 # Create logs directory if it doesn't exist
 log_dir = "logs"
@@ -48,6 +47,7 @@ def get_message_object(subject, sender, attachment_path=None):
 
 
 def parse_search_query_response(search_query=""):
+    global gemini_api
     url = gemini_api.search_url
     url = url.format(query=search_query)
     response = requests.get(url)
@@ -88,6 +88,7 @@ def send_single_email(
     formatted_name = " ".join([name.capitalize() for name in formatted_name.lower().split(" ")])
     if use_llm:
         global model
+        global gemini_api
         search_query = f"{formatted_name} Company Projects Saudi Arabia"
         list_of_results = parse_search_query_response(search_query=search_query)
 
@@ -134,6 +135,8 @@ def send_email(
     logger.info(f"Starting email sending process for {len(recipients)} recipients. LLM: {use_llm}")
     if use_llm:
         global model
+        global gemini_api
+        gemini_api = GeminiApi()
         genai.configure(api_key=gemini_api.key.get_secret_value())
         model = genai.GenerativeModel("gemini-1.5-flash")
 
