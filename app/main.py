@@ -15,7 +15,8 @@ def main():
     template = open(email.template).read()
 
     # ============== Recipients ==============
-    recipients: list[RecipientModel] = RecipientModel.from_file(email_paths.test_path)
+    recipients: list[RecipientModel] = RecipientModel.from_file(email_paths.full_path)
+
     email_sender(
         subject=subject,
         sender=sender,

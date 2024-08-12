@@ -106,21 +106,30 @@ def send_single_email(
         body = body.format(name=formatted_name, sender_name=sender["name"], body=generated_body)
     else:
         body = body.format(name=formatted_name, sender_name=sender["name"], body=email_model.default_body)
-
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
-        smtp_server.login(login_settings.email, login_settings.password.get_secret_value())
-        for email in emails:
-            msg = get_message_object(subject, sender, attachment_path)
-            msg.attach(MIMEText(body, "plain"))
-            msg["to"] = email
-            try:
-                smtp_server.sendmail(sender["email"], email, msg.as_string())
-                logger.info(f"Email sent successfully to {email} - LLM: {use_llm}")
-                print(f"Email sent to {email}")
-            except Exception as e:
-                error_message = f"Failed to send email to {email}: {str(e)}"
-                logger.error(error_message)
-                print(error_message)
+    not_sent = True
+    while not_sent:
+        try:
+            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp_server:
+                smtp_server.login(login_settings.email, login_settings.password.get_secret_value())
+                for email in emails:
+                    msg = get_message_object(subject, sender, attachment_path)
+                    msg.attach(MIMEText(body, "plain"))
+                    msg["to"] = email
+                    try:
+                        smtp_server.sendmail(sender["email"], email, msg.as_string())
+                        logger.info(f"Email sent successfully to {email} - LLM: {use_llm}")
+                        print(f"Email sent to {email}")
+                    except Exception as e:
+                        error_message = f"Failed to send email to {email}: {str(e)}"
+                        logger.error(error_message)
+                        print(error_message)
+                not_sent = False
+        except Exception as e:
+            error_message = f"Failed to connect to the SMTP server: {str(e)}"
+            logger.error(error_message)
+            print(error_message)
+            time.sleep(10)
+            continue
 
 
 # ============== Send Emails using Multithreading ==============
@@ -133,6 +142,7 @@ def send_email(
     use_llm: bool = False,
 ):
     logger.info(f"Starting email sending process for {len(recipients)} recipients. LLM: {use_llm}")
+    starting_position = int(input("Enter the starting position: "))
     if use_llm:
         global model
         global gemini_api
@@ -141,7 +151,7 @@ def send_email(
         model = genai.GenerativeModel("gemini-1.5-flash")
 
     batch_size = 10
-    for i in range(0, len(recipients), batch_size):
+    for i in range(starting_position, len(recipients), batch_size):
         batch = recipients[i : i + batch_size]
 
         with ThreadPoolExecutor() as executor:
@@ -155,8 +165,8 @@ def send_email(
         logger.info(f"Sent emails to recipients {i+1} to {min(i+batch_size, len(recipients))} - LLM: {use_llm}")
 
         if i + batch_size < len(recipients):
-            logger.info(f"Waiting {"one minute" if use_llm else "5 seconds"} before sending next batch")
-            time.sleep(60 if use_llm else 5)
+            logger.info(f"Waiting {"one minute" if use_llm else "10 seconds"} before sending next batch")
+            time.sleep(60 if use_llm else 10)
 
     logger.info("All Emails Sent!")
     print("All Emails Sent!")

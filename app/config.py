@@ -97,7 +97,7 @@ class EmailModel(BaseSettings):
     template: str
     default_body: str = """My name is Radwan Albahrani, and I am writing to apply for a developer position at your organization.
 
-As a full stack engineer with experience in App and Web development, as well as proficiency in backend implementation, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
+As a full stack engineer with experience in App (Flutter) and Web (Django, React) development, as well as proficiency in backend (FastAPI, Express) implementation, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
 """
 
     @model_validator(mode="before")
