@@ -20,8 +20,6 @@ def main():
 
     recipients = [recipient for recipient in recipients if recipient not in blacklist]
 
-    print(f"Sending email to {len(recipients)} recipients")
-
     email_sender(
         subject=subject,
         sender=sender,
