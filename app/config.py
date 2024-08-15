@@ -73,6 +73,7 @@ class EmailPathsSettings(BaseSettings):
     test_path: str | None = None
     startups_path: str
     full_path: str
+    blacklist_path: str
 
     class Config(SettingsConfigDict):
         env_prefix = "EMAIL_PATHS_"

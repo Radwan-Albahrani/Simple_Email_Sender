@@ -16,6 +16,11 @@ def main():
 
     # ============== Recipients ==============
     recipients: list[RecipientModel] = RecipientModel.from_file(email_paths.full_path)
+    blacklist: list[RecipientModel] = RecipientModel.from_file(email_paths.blacklist_path)
+
+    recipients = [recipient for recipient in recipients if recipient not in blacklist]
+
+    print(f"Sending email to {len(recipients)} recipients")
 
     email_sender(
         subject=subject,
