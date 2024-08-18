@@ -1,5 +1,6 @@
 import logging
 import os
+import random
 import re
 import smtplib
 import time
@@ -128,7 +129,7 @@ def send_single_email(
             error_message = f"Failed to connect to the SMTP server: {str(e)}"
             logger.error(error_message)
             print(error_message)
-            time.sleep(10)
+            time.sleep(random.randint(60, 70))
             continue
 
 
