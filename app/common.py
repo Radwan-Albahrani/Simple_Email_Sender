@@ -103,10 +103,11 @@ def send_single_email(
         ).text
 
         generated_body = parse_generated_content(generated_body, email_model)
-    if use_llm:
         body = body.format(name=formatted_name, sender_name=sender["name"], body=generated_body)
+
     else:
         body = body.format(name=formatted_name, sender_name=sender["name"], body=email_model.default_body)
+
     not_sent = True
     while not_sent:
         try:
@@ -155,9 +156,17 @@ def send_email(
     for i in range(starting_position, len(recipients), batch_size):
         batch = recipients[i : i + batch_size]
 
-        with ThreadPoolExecutor() as executor:
+        with ThreadPoolExecutor(max_workers=8) as executor:
             futures = [
-                executor.submit(send_single_email, subject, body, sender, recipient, attachment_path, use_llm)
+                executor.submit(
+                    send_single_email,
+                    subject,
+                    body,
+                    sender,
+                    recipient,
+                    attachment_path,
+                    use_llm,
+                )
                 for recipient in batch
             ]
             for future in futures:

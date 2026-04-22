@@ -1,3 +1,5 @@
+import time
+
 from common import send_email
 from config import EmailModel
 from schemas import RecipientModel
@@ -18,6 +20,7 @@ def email_sender(
         use_llm = True
     sure = input("Are you sure you want to send these emails? (YES/n): ")
     if sure == "YES":
+        start_time = time.time()
         send_email(
             subject=subject,
             body=template,
@@ -26,3 +29,4 @@ def email_sender(
             attachment_path=attachment_path,
             use_llm=use_llm,
         )
+        print(f"Time taken: {time.time() - start_time}")
