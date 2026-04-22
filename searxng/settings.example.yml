@@ -1,0 +1,11 @@
+use_default_settings: true
+
+server:
+  secret_key: "REPLACE_WITH_A_RANDOM_HEX_STRING"  # generate with: openssl rand -hex 32
+  limiter: false
+  image_proxy: false
+
+search:
+  formats:
+    - html
+    - json
