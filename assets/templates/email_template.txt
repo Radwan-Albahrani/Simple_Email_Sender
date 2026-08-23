@@ -1,0 +1,14 @@
+Dear {name},
+
+{body}
+Attached is my resume for your consideration.
+
+Thank you for your time.
+
+Github: https://github.com/Radwan-Albahrani
+Linkedin: https://www.linkedin.com/in/radwan-albahrani-0030b8198
+
+I look forward to your response and believe my skills align with your needs.
+
+Sincerely,
+{sender_name}

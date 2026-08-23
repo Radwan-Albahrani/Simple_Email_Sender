@@ -1,79 +1,86 @@
+"""One-off cleanup of raw scraped exhibitor data into recipient lists.
+
+Reads the raw ``response*.json`` dumps and writes de-duplicated, ASCII-cleaned
+``{name, emails}`` lists. Run it directly:
+
+    python app/services/response_parser.py --input-dir assets/input --output-dir assets/output
+"""
+
+import argparse
 import json
-
-# open responses.json and parse the data
-with open("input/response.json") as json_file, open("output/emails.json", "w") as f:
-    data = json.load(json_file)
-    email_list = []
-    for p in data["data"]["response"]["exhibitors"]["nodes"]:
-        if p.get("email"):
-            result = {"name": p["name"], "emails": p["email"].split(",")}
-            if len(result["emails"]) > 1:
-                result["emails"] = [email.strip() for email in result["emails"]]
-            email_list.append(result)
-    json.dump(email_list, f, indent=2)
-
-with open("input/response_startups.json") as json_file:
-    data = json.load(json_file)
-    email_list = []
-    for p in data["data"]["response"]["exhibitors"]["nodes"]:
-        if p.get("email"):
-            result = {"name": p["name"], "emails": p["email"].split(",")}
-            if len(result["emails"]) > 1:
-                result["emails"] = [email.strip() for email in result["emails"]]
-            email_list.append(result)
-
-    with open("output/emails_startups.json", "w") as f:
-        json.dump(email_list, f, indent=2)
-
-    with open("output/emails.json", "r") as f:
-        data = json.load(f)
-        data.extend(email_list)
-
-    with open("output/emails.json", "w") as f:
-        json.dump(data, f, indent=2)
-
-
-# clean any duplicates
-objects_seen = set()
-with open("output/emails.json", "r") as inFile:
-    data = json.load(inFile)
-    cleaned_data = []
-    for obj in data:
-        if obj["name"] not in objects_seen:
-            cleaned_data.append(obj)
-            objects_seen.add(obj["name"])
-        else:
-            print(f"Duplicate: {obj['name']}")
-    with open("output/emails_cleaned.json", "w") as outfile:
-        json.dump(cleaned_data, outfile, indent=2)
-
-# Keep only Latin Characters in the name
 import re
+from pathlib import Path
+from typing import Any
 
-with open("output/emails_cleaned.json", "r") as inFile:
-    data = json.load(inFile)
-    cleaned_data = []
-    for obj in data:
-        obj["name"] = re.sub(r"[^\x00-\x7F]+", "", obj["name"])
-        for index, email in enumerate(obj["emails"]):
-            email = re.sub(r"[^\w\.-@]", "", email)
-            obj["emails"][index] = email
-        obj["name"] = re.sub(r"[^A-Za-z0-9\s]+", "", obj["name"])
-        obj["name"] = obj["name"].strip()
-        cleaned_data.append(obj)
-    with open("output/emails_cleaned.json", "w") as outfile:
-        json.dump(cleaned_data, outfile, indent=2)
+Recipient = dict[str, Any]
 
-with open("output/emails_startups_cleaned.json", "r") as inFile:
-    data = json.load(inFile)
-    cleaned_data = []
-    for obj in data:
-        obj["name"] = re.sub(r"[^\x00-\x7F]+", "", obj["name"])
-        for index, email in enumerate(obj["emails"]):
-            email = re.sub(r"[^\w\.-@]", "", email)
-            obj["emails"][index] = email
-        obj["name"] = re.sub(r"[^A-Za-z0-9\s]+", "", obj["name"])
-        obj["name"] = obj["name"].strip()
-        cleaned_data.append(obj)
-    with open("output/emails_startups_cleaned.json", "w") as outfile:
-        json.dump(cleaned_data, outfile, indent=2)
+
+def extract_recipients(raw_path: Path) -> list[Recipient]:
+    """Pull ``{name, emails}`` entries out of a raw scrape dump."""
+    with raw_path.open(encoding="utf-8") as handle:
+        data = json.load(handle)
+
+    nodes = data["data"]["response"]["exhibitors"]["nodes"]
+    recipients: list[Recipient] = []
+    for node in nodes:
+        raw_email = node.get("email")
+        if not raw_email:
+            continue
+        emails = [email.strip() for email in raw_email.split(",") if email.strip()]
+        if emails:
+            recipients.append({"name": node["name"], "emails": emails})
+    return recipients
+
+
+def deduplicate(recipients: list[Recipient]) -> list[Recipient]:
+    """Drop repeated company names, keeping the first occurrence."""
+    seen: set[str] = set()
+    unique: list[Recipient] = []
+    for recipient in recipients:
+        name = recipient["name"]
+        if name in seen:
+            print(f"Duplicate: {name}")
+            continue
+        seen.add(name)
+        unique.append(recipient)
+    return unique
+
+
+def clean(recipients: list[Recipient]) -> list[Recipient]:
+    """Strip non-ASCII/punctuation noise out of names and addresses."""
+    cleaned: list[Recipient] = []
+    for recipient in recipients:
+        name = re.sub(r"[^\x00-\x7F]+", "", recipient["name"])
+        name = re.sub(r"[^A-Za-z0-9\s]+", "", name).strip()
+        emails = [re.sub(r"[^\w.\-@]", "", email) for email in recipient["emails"]]
+        cleaned.append({"name": name, "emails": emails})
+    return cleaned
+
+
+def write_json(path: Path, payload: list[Recipient]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("w", encoding="utf-8") as handle:
+        json.dump(payload, handle, indent=2)
+    print(f"Wrote {len(payload)} entries to {path}")
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input-dir", type=Path, default=Path("assets/input"))
+    parser.add_argument("--output-dir", type=Path, default=Path("assets/output"))
+    args = parser.parse_args()
+
+    input_dir: Path = args.input_dir
+    output_dir: Path = args.output_dir
+
+    general = extract_recipients(input_dir / "response.json")
+    startups = extract_recipients(input_dir / "response_startups.json")
+
+    write_json(output_dir / "emails.json", general + startups)
+    write_json(output_dir / "emails_startups.json", startups)
+    write_json(output_dir / "emails_cleaned.json", clean(deduplicate(general + startups)))
+    write_json(output_dir / "emails_startups_cleaned.json", clean(deduplicate(startups)))
+
+
+if __name__ == "__main__":
+    main()

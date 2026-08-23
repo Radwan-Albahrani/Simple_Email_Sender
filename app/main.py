@@ -1,32 +1,51 @@
-from config import EmailModel, EmailPathsSettings
+from pathlib import Path
+
+from config import EmailModel, EmailPathsSettings, load
 from schemas import RecipientModel
 from services.email_sender import email_sender
-from tinydb import TinyDB
+from services.recipient_lists import (
+    discover_recipient_lists,
+    merge_recipients,
+    select_recipient_lists,
+)
 
 
-def main():
-    email_paths = EmailPathsSettings()
-    email = EmailModel()
+def main() -> None:
+    email_paths = load(EmailPathsSettings)
+    email = load(EmailModel)
 
-    # ============== Email Sender ==============
-    sender = email.email_sender.model_dump()
+    # ============== Subject, template and blacklist ==============
+    template = Path(email.template).read_text(encoding="utf-8")
+    blacklist_path = Path(email_paths.blacklist_path)
+    blacklist: list[RecipientModel] = (
+        RecipientModel.from_file(blacklist_path) if blacklist_path.exists() else []
+    )
 
-    # ============== Subject and body ==============
-    subject = email.subject
-    template = open(email.template).read()
+    # ============== Pick recipient lists ==============
+    available = discover_recipient_lists(exclude=(blacklist_path,))
+    if not available:
+        print("No recipient lists found under assets/.")
+        return
 
-    # TinyDB
-    # tinydb = TinyDB("./assets/input/dammam/small_company_size.json")
+    chosen = select_recipient_lists(available)
+    if not chosen:
+        print("Cancelled.")
+        return
 
-    # ============== Recipients ==============
-    recipients: list[RecipientModel] = RecipientModel.from_file(email_paths.test_path)
-    blacklist: list[RecipientModel] = RecipientModel.from_file(email_paths.blacklist_path)
-
-    recipients = [recipient for recipient in recipients if recipient not in blacklist]
+    recipients = merge_recipients(chosen, blacklist)
+    selected_total = sum(len(item.recipients) for item in chosen)
+    print(
+        f"\nSelected {len(chosen)} list(s): {', '.join(item.label for item in chosen)}"
+        f"\n{selected_total} entries -> {len(recipients)} after removing duplicates"
+        f" and {len(blacklist)} blacklisted"
+    )
+    if not recipients:
+        print("Nothing left to send after filtering.")
+        return
 
     email_sender(
-        subject=subject,
-        sender=sender,
+        subject=email.subject,
+        sender=email.email_sender,
         recipients=recipients,
         attachment_path=email.attachment_path,
         template=template,

@@ -1,0 +1,32 @@
+
+Write a brief, genuine email body for a job application that reflects my personal experiences and interests.
+Use specific details from my resume to highlight one or two key achievements or skills that set me apart.
+If Additional Info is provided, mention a current trend or challenge in the industry that genuinely excites or interests me, based on that information.
+If no Additional Info is given, omit this part. Keep the tone friendly but professional and conversational, as if I'm talking to a potential employer.
+
+Example:
+I am writing to apply for a part-time developer position at your organization.
+
+As a full stack engineer with experience in FastAPI, Django, Flutter, and React, I am confident in my ability to contribute effectively to your team. I quickly adapt to new technologies, ensuring I can meet the dynamic needs of your projects.
+
+Rules:
+- Do not start the email with "I am excited to apply for..." or similar phrases.
+- Start with "I am writing to apply for..." or similar. This keeps the tone professional.
+- Avoid overly formal language or buzzwords that might sound artificial.
+- Write only the email body, no greetings or closings.
+- Use concrete details from my resume. Avoid vague or generic statements.
+- If Additional Info is provided, naturally weave in a reference to the company's work.
+- Don't include any placeholders, brackets, or requests for information insertion.
+- If any part of the response can't be completed without a placeholder, omit that part entirely.
+- Don't mention specific companies unless given in Additional Info.
+- Write 2 short paragraphs, 1-2 sentences each, separated by a blank line.
+- Be concise and authentic. Aim for a natural, conversational tone while staying professional.
+
+Context (use if provided):
+- Company Name: {company_name}
+- Additional Info: {extra_info}
+- My Resume: {resume_text}
+- Email Template: {email_template}
+
+Create an email body that sounds like it's genuinely written by me, based on my actual experiences and interests from the resume. Keep it professional but conversational,
+and avoid sounding overly formal or artificial.

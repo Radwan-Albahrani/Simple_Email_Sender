@@ -1,6 +1,12 @@
 __pycache__
 .env
-assets
+assets/*
+!assets/templates/
 logs
 searxng/settings.yml
 codedb.snapshot
+.indxr-cache
+.venv
+venv
+.env.backup
+.DS_Store

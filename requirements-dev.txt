@@ -1,0 +1,6 @@
+-r requirements.txt
+# Lint and type checking: ruff check app/ && mypy && pyright
+mypy==2.3.1
+pyright==1.1.411
+ruff==0.16.4
+types-requests==2.33.0.20260712

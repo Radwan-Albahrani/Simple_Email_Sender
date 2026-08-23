@@ -1,0 +1,40 @@
+[project]
+name = "simple-email-sender"
+version = "0.1.0"
+requires-python = ">=3.12"
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+src = ["app"]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle
+    "F",    # pyflakes
+    "I",    # isort
+    "B",    # bugbear
+    "BLE",  # blind except
+    "UP",   # pyupgrade
+    "SIM",  # simplify
+    "RUF",  # ruff-specific
+]
+
+[tool.mypy]
+python_version = "3.12"
+mypy_path = "app"
+files = ["app"]
+strict = true
+plugins = ["pydantic.mypy"]
+
+
+[tool.pyright]
+include = ["app"]
+pythonVersion = "3.12"
+extraPaths = ["app"]
+venvPath = "."
+venv = ".venv"
+typeCheckingMode = "strict"
+
+[tool.ruff.lint.isort]
+known-first-party = ["common", "config", "schemas", "services"]
